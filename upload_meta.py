@@ -50,10 +50,18 @@ if __name__ == '__main__':
     if not creds:
         print('Meta secrets not set, skipping Instagram and Facebook.'); sys.exit(0)
     token, page, ig = creds
+    # posted.log remembers what already went out, so a reel is never posted twice on the same platform
+    log = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'posted.log')
+    done = set(open(log, encoding='utf8').read().split('\n')) if os.path.exists(log) else set()
+    day = meta['date']
     failed = False
     for name, fn, target in [('Instagram', post_instagram, ig), ('Facebook', post_facebook, page)]:
+        mark = f'{name.lower()} {day}'
+        if mark in done:
+            print(name, 'already posted for', day, '- skipping'); continue
         try:
             print(name, 'posted:', fn(base + '.mp4', meta['caption'], token, target))
+            open(log, 'a', encoding='utf8').write(mark + '\n')
         except Exception as e:
             failed = True; print(name, 'FAILED:', e)
     sys.exit(1 if failed else 0)
