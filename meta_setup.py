@@ -4,7 +4,7 @@ into a Page token that does not expire, and prints the three values for GitHub s
     python meta_setup.py APP_ID APP_SECRET SHORT_LIVED_USER_TOKEN
 """
 import sys, requests
-G = 'https://graph.facebook.com/v21.0'
+G = 'https://graph.facebook.com/v25.0'
 app_id, app_secret, short = sys.argv[1:4]
 long = requests.get(f'{G}/oauth/access_token', params={'grant_type': 'fb_exchange_token', 'client_id': app_id,
                     'client_secret': app_secret, 'fb_exchange_token': short}, timeout=30).json()
