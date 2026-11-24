@@ -11,10 +11,14 @@ on:
 
 permissions:
   contents: write
+  pages: write
+  id-token: write
 
 jobs:
   reel:
     runs-on: ubuntu-latest
+    environment:
+      name: github-pages
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
@@ -36,6 +40,25 @@ jobs:
           name: reel-${{ github.run_number }}
           path: out/*.*
           retention-days: 30
+      # Instagram downloads the video from a public link, so today's reel is published on GitHub Pages
+      - name: Public copy for Instagram
+        id: pub
+        if: steps.make.outputs.base
+        run: |
+          D=$(basename "${{ steps.make.outputs.base }}")
+          mkdir -p public && cp "${{ steps.make.outputs.base }}.mp4" "public/$D.mp4" && touch public/.nojekyll
+          echo "url=https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/$D.mp4" >> "$GITHUB_OUTPUT"
+      - uses: actions/configure-pages@v5
+        if: steps.make.outputs.base
+        continue-on-error: true
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.make.outputs.base
+        continue-on-error: true
+        with:
+          path: public
+      - uses: actions/deploy-pages@v4
+        if: steps.make.outputs.base
+        continue-on-error: true
       - name: Instagram + Facebook
         if: steps.make.outputs.base
         continue-on-error: true
@@ -43,6 +66,7 @@ jobs:
           META_PAGE_TOKEN: ${{ secrets.META_PAGE_TOKEN }}
           FB_PAGE_ID: ${{ secrets.FB_PAGE_ID }}
           IG_USER_ID: ${{ secrets.IG_USER_ID }}
+          PUBLIC_VIDEO_URL: ${{ steps.pub.outputs.url }}
         run: python upload_meta.py "${{ steps.make.outputs.base }}"
       - name: YouTube Shorts
         if: steps.make.outputs.base
