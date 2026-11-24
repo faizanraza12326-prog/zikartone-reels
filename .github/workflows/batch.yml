@@ -1,0 +1,34 @@
+name: Batch of reels (for TikTok / manual scheduling)
+
+on:
+  workflow_dispatch:
+    inputs:
+      from:
+        description: 'First date (YYYY-MM-DD)'
+        required: true
+      days:
+        description: 'How many days (max 30)'
+        required: true
+        default: '30'
+
+jobs:
+  batch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          pip install -q -r requirements.txt
+          bash setup_assets.sh
+      - name: Make the reels
+        run: python make_reel.py --from ${{ github.event.inputs.from }} --days ${{ github.event.inputs.days }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: reels-${{ github.event.inputs.from }}
+          path: out/*.*
+          retention-days: 30
