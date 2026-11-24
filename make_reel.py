@@ -57,7 +57,7 @@ def render(day, out_mp4):
     audio.build(len(quiz), wav)
     subprocess.run(['ffmpeg', '-y', '-loglevel', 'error', '-framerate', str(FPS), '-i', os.path.join(work, '%05d.jpg'), '-i', wav,
                     '-vf', 'fps=30,format=yuv420p', '-c:v', 'libx264', '-preset', 'veryfast', '-crf', '20',
-                    '-c:a', 'aac', '-b:a', '160k', '-shortest', '-movflags', '+faststart', out_mp4], check=True)
+                    '-c:a', 'aac', '-b:a', '160k', '-ar', '48000', '-ac', '2', '-shortest', '-movflags', '+faststart', '-use_editlist', '0', out_mp4], check=True)
     shutil.rmtree(work, ignore_errors=True)
 
 def make(date_str):
