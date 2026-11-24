@@ -52,13 +52,30 @@ jobs:
         if: steps.make.outputs.base
         continue-on-error: true
       - uses: actions/upload-pages-artifact@v3
+        id: up1
         if: steps.make.outputs.base
         continue-on-error: true
         with:
           path: public
       - uses: actions/deploy-pages@v4
+        id: dep1
         if: steps.make.outputs.base
         continue-on-error: true
+      # GitHub sometimes has a hiccup here; wait a minute and try once more under a new name
+      - name: Wait before retry
+        if: steps.make.outputs.base && steps.dep1.outcome != 'success'
+        run: sleep 60
+      - uses: actions/upload-pages-artifact@v3
+        if: steps.make.outputs.base && steps.dep1.outcome != 'success'
+        continue-on-error: true
+        with:
+          path: public
+          name: github-pages-retry
+      - uses: actions/deploy-pages@v4
+        if: steps.make.outputs.base && steps.dep1.outcome != 'success'
+        continue-on-error: true
+        with:
+          artifact_name: github-pages-retry
       - name: Instagram + Facebook
         if: steps.make.outputs.base
         continue-on-error: true
