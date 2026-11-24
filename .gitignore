@@ -1,0 +1,7 @@
+out/
+__pycache__/
+client_secret*.json
+assets/fonts/
+assets/logo.png
+data/
+_tmp/
