@@ -15,6 +15,10 @@ def main(base):
     creds = Credentials(None, refresh_token=ref, token_uri='https://oauth2.googleapis.com/token', client_id=cid, client_secret=sec,
                         scopes=['https://www.googleapis.com/auth/youtube.upload'])
     meta = json.load(open(base + '.json', encoding='utf8'))
+    log = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'posted.log')
+    mark = f"youtube {meta['date']}"
+    if os.path.exists(log) and mark in open(log, encoding='utf8').read().split('\n'):
+        print('YouTube already posted for', meta['date'], '- skipping'); return 0
     yt = build('youtube', 'v3', credentials=creds, cache_discovery=False)
     body = {'snippet': {'title': meta['title'][:100], 'description': meta['caption'][:4900], 'categoryId': '27',
                         'tags': ['Quran', 'Quran quiz', 'Guess the Surah', 'Islamic quiz', 'Zikartone']},
@@ -23,7 +27,8 @@ def main(base):
     resp = None
     while resp is None:
         _, resp = req.next_chunk()
-    print('YouTube posted:', resp.get('id'))
+    print('YouTube posted:', resp.get('id'), 'privacy:', resp.get('status', {}).get('privacyStatus'), flush=True)
+    open(log, 'a', encoding='utf8').write(mark + '\n')
     return 0
 
 if __name__ == '__main__':
