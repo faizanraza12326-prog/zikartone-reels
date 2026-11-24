@@ -20,13 +20,18 @@ def post_instagram(mp4, caption, token, ig):
     if 'id' not in r: raise RuntimeError(f'Instagram container failed: {r}')
     cid, uri = r['id'], r.get('uri') or f'https://rupload.facebook.com/ig-api-upload/{V}/{r["id"]}'
     data = open(mp4, 'rb').read()
-    up = requests.post(uri, headers={'Authorization': f'OAuth {token}', 'offset': '0', 'file_size': str(len(data))}, data=data, timeout=300).json()
-    if not up.get('success', True): raise RuntimeError(f'Instagram upload failed: {up}')
-    for _ in range(60):                     # wait up to ~10 minutes for processing
+    up = requests.post(uri, headers={'Authorization': f'OAuth {token}', 'offset': '0', 'file_size': str(len(data))}, data=data, timeout=300)
+    print('Instagram upload response:', up.status_code, up.text[:500], flush=True)
+    if up.status_code != 200 or up.json().get('success') is not True: raise RuntimeError(f'Instagram upload failed: {up.text[:500]}')
+    st = {}
+    for k in range(90):                     # wait up to ~15 minutes for processing
         st = requests.get(f'{G}/{cid}', params={'fields': 'status_code,status', 'access_token': token}, timeout=30).json()
+        if k % 6 == 0: print('Instagram processing:', st, flush=True)
         if st.get('status_code') == 'FINISHED': break
         if st.get('status_code') == 'ERROR': raise RuntimeError(f'Instagram processing error: {st}')
         time.sleep(10)
+    else:
+        raise RuntimeError(f'Instagram still processing after 15 minutes: {st}')
     pub = requests.post(f'{G}/{ig}/media_publish', data={'creation_id': cid, 'access_token': token}, timeout=60).json()
     if 'id' not in pub: raise RuntimeError(f'Instagram publish failed: {pub}')
     return pub['id']
