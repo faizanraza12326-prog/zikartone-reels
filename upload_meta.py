@@ -7,7 +7,7 @@ Needs these environment variables (GitHub secrets):
 Skips quietly if they are not set."""
 import json, os, sys, time, requests
 
-V = 'v21.0'
+V = 'v25.0'
 G = f'https://graph.facebook.com/{V}'
 
 def need(*names):
