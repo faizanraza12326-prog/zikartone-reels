@@ -38,19 +38,18 @@ def fb_video_url(page, token, caption):
         time.sleep(10)
     raise RuntimeError(f'Facebook reel file URL not found: {str(r)[:300]}')
 
-def temp_public_url(mp4):
-    """Put the reel on a free temporary file host so Instagram can download it (the reel is going public anyway)."""
-    hosts = [('https://litterbox.catbox.moe/resources/internals/api.php', {'reqtype': 'fileupload', 'time': '24h'}),
-             ('https://catbox.moe/user/api.php', {'reqtype': 'fileupload'})]
-    for url, data in hosts:
+def public_url():
+    """Today's reel on GitHub Pages (set by the workflow). Waits until the link really serves the file."""
+    u = os.environ.get('PUBLIC_VIDEO_URL', '').strip()
+    if not u: return None
+    for _ in range(36):                     # up to ~6 minutes for Pages to go live
         try:
-            with open(mp4, 'rb') as f:
-                r = requests.post(url, data=data, files={'fileToUpload': (os.path.basename(mp4), f, 'video/mp4')}, timeout=300)
-            if r.ok and r.text.strip().startswith('https://'):
-                return r.text.strip()
-            print('File host', url.split('/')[2], 'said:', r.status_code, r.text[:200], flush=True)
-        except Exception as e:
-            print('File host', url.split('/')[2], 'failed:', e, flush=True)
+            r = requests.head(u, timeout=30, allow_redirects=True)
+            if r.status_code == 200: return u
+        except Exception:
+            pass
+        time.sleep(10)
+    print('Public link never came up:', u, flush=True)
     return None
 
 def ig_from_url(src, caption, token, ig):
@@ -60,17 +59,17 @@ def ig_from_url(src, caption, token, ig):
     return ig_wait_publish(r['id'], token, ig)
 
 def post_instagram(mp4, caption, token, ig, page=None):
+    src = public_url()
+    if src:
+        print('Instagram: using the public link:', src, flush=True)
+        try:
+            return ig_from_url(src, caption, token, ig)
+        except Exception as e:
+            print('Instagram from public link did not work:', e, flush=True)
     try:
         return post_instagram_resumable(mp4, caption, token, ig)
     except Exception as e:
         print('Instagram direct upload did not work:', e, flush=True)
-    src = temp_public_url(mp4)
-    if src:
-        print('Instagram: trying with a temporary public copy:', src, flush=True)
-        try:
-            return ig_from_url(src, caption, token, ig)
-        except Exception as e:
-            print('Instagram from temporary copy did not work:', e, flush=True)
     if not page: raise RuntimeError('Instagram: no way left to upload')
     print('Instagram: trying with the Facebook reel file URL', flush=True)
     return ig_from_url(fb_video_url(page, token, caption), caption, token, ig)
