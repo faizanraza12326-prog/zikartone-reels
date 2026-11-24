@@ -38,18 +38,42 @@ def fb_video_url(page, token, caption):
         time.sleep(10)
     raise RuntimeError(f'Facebook reel file URL not found: {str(r)[:300]}')
 
+def temp_public_url(mp4):
+    """Put the reel on a free temporary file host so Instagram can download it (the reel is going public anyway)."""
+    hosts = [('https://litterbox.catbox.moe/resources/internals/api.php', {'reqtype': 'fileupload', 'time': '24h'}),
+             ('https://catbox.moe/user/api.php', {'reqtype': 'fileupload'})]
+    for url, data in hosts:
+        try:
+            with open(mp4, 'rb') as f:
+                r = requests.post(url, data=data, files={'fileToUpload': (os.path.basename(mp4), f, 'video/mp4')}, timeout=300)
+            if r.ok and r.text.strip().startswith('https://'):
+                return r.text.strip()
+            print('File host', url.split('/')[2], 'said:', r.status_code, r.text[:200], flush=True)
+        except Exception as e:
+            print('File host', url.split('/')[2], 'failed:', e, flush=True)
+    return None
+
+def ig_from_url(src, caption, token, ig):
+    r = requests.post(f'{G}/{ig}/media', data={'media_type': 'REELS', 'video_url': src, 'caption': caption,
+                                               'share_to_feed': 'true', 'access_token': token}, timeout=60).json()
+    if 'id' not in r: raise RuntimeError(f'Instagram container (video_url) failed: {r}')
+    return ig_wait_publish(r['id'], token, ig)
+
 def post_instagram(mp4, caption, token, ig, page=None):
     try:
         return post_instagram_resumable(mp4, caption, token, ig)
     except Exception as e:
         print('Instagram direct upload did not work:', e, flush=True)
-        if not page: raise
-    print('Instagram: trying again with the Facebook reel file URL', flush=True)
-    src = fb_video_url(page, token, caption)
-    r = requests.post(f'{G}/{ig}/media', data={'media_type': 'REELS', 'video_url': src, 'caption': caption,
-                                               'share_to_feed': 'true', 'access_token': token}, timeout=60).json()
-    if 'id' not in r: raise RuntimeError(f'Instagram container (video_url) failed: {r}')
-    return ig_wait_publish(r['id'], token, ig)
+    src = temp_public_url(mp4)
+    if src:
+        print('Instagram: trying with a temporary public copy:', src, flush=True)
+        try:
+            return ig_from_url(src, caption, token, ig)
+        except Exception as e:
+            print('Instagram from temporary copy did not work:', e, flush=True)
+    if not page: raise RuntimeError('Instagram: no way left to upload')
+    print('Instagram: trying with the Facebook reel file URL', flush=True)
+    return ig_from_url(fb_video_url(page, token, caption), caption, token, ig)
 
 def post_instagram_resumable(mp4, caption, token, ig):
     r = requests.post(f'{G}/{ig}/media', data={'media_type': 'REELS', 'upload_type': 'resumable', 'caption': caption,
