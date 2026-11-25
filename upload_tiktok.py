@@ -69,6 +69,15 @@ def upload(mp4, caption, private):
                     pass
         page.keyboard.press('Escape')
     page.add_locator_handler(page.locator('.TUXModal-overlay').first, close_popup, no_wait_after=True)
+    # "New features" guided tour (react-joyride) also covers the page: hide it with CSS (removing it could break the page).
+    hide_tour = """() => { if (document.getElementById('zk-hide-tour')) return;
+        const st = document.createElement('style'); st.id = 'zk-hide-tour';
+        st.textContent = '#react-joyride-portal, .react-joyride__overlay, .react-joyride__spotlight, .__floater' +
+                         ' { display: none !important; pointer-events: none !important; }';
+        (document.head || document.documentElement).appendChild(st); }"""
+    page.context.add_init_script(f"setInterval({hide_tour}, 300);")
+    page.add_locator_handler(page.locator('.react-joyride__overlay').first,
+                             lambda o: page.evaluate(hide_tour), no_wait_after=True)
     try:
         failed = up.upload_videos([{'path': mp4, 'description': caption,
                                     **({'visibility': 'only_you'} if private else {})}])
