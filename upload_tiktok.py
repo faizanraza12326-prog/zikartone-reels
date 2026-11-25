@@ -57,9 +57,26 @@ def upload(mp4, caption, private):
     if env('TIKTOK_IDC'):
         cookies.append({'name': 'tt-target-idc', 'value': env('TIKTOK_IDC'), 'domain': '.tiktok.com', 'path': '/'})
     up = TikTokUploader(cookies_list=cookies, browser='chromium', headless=True)
+    page = up.page                              # opens the browser and logs in
+    # TikTok shows one-time popups (content check, new features...) that block the buttons. Close them whenever they appear.
+    def close_popup(overlay):
+        for name in ('Turn on', 'Got it', 'Not now', 'Cancel', 'OK', 'Continue', 'Close', 'Confirm'):
+            btn = page.locator('[data-floating-ui-portal] button, .TUXModal button, [role=dialog] button').filter(has_text=re.compile('^' + name + '$', re.I))
+            if btn.count():
+                try:
+                    btn.first.click(timeout=3000, force=True); print('Closed TikTok popup with', name, flush=True); return
+                except Exception:
+                    pass
+        page.keyboard.press('Escape')
+    page.add_locator_handler(page.locator('.TUXModal-overlay').first, close_popup, no_wait_after=True)
     try:
         failed = up.upload_videos([{'path': mp4, 'description': caption,
                                     **({'visibility': 'only_you'} if private else {})}])
+        if failed:
+            try:
+                page.screenshot(path='tiktok_fail.png', full_page=True)
+            except Exception:
+                pass
     finally:
         try:
             up.close()
