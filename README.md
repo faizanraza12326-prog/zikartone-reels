@@ -13,7 +13,7 @@ Har roz shaam 7 baje (Pakistan time) GitHub khud ek nayi reel banata hai aur **I
 | Facebook Page "Zikartone" | Khud, roz 7 PM | META_PAGE_TOKEN, FB_PAGE_ID |
 | Instagram zikartone.official | Khud, roz 7 PM (video GitHub Pages ke public link se jati hai) | META_PAGE_TOKEN, IG_USER_ID |
 | YouTube Zikartone.official | Khud, roz 7 PM | YT_CLIENT_ID, YT_CLIENT_SECRET, YT_REFRESH_TOKEN |
-| TikTok | Khud, roz 7 PM (autotok, TikTok ki web upload) | TIKTOK_SESSIONID, TIKTOK_IDC (+ variable TIKTOK_UA) |
+| TikTok | Khud, roz 7 PM (tiktok-uploader: TikTok ka upload page khud chalata hai) | TIKTOK_SESSIONID, TIKTOK_IDC (+ variable TIKTOK_UA) |
 
 Repo **Public** hai taa ke GitHub Pages chale (Instagram ko video ka public link chahiye). Secrets phir bhi kisi ko nazar nahi aate.
 
