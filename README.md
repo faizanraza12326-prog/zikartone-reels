@@ -27,7 +27,7 @@ TikTok apne free scheduler mein sirf 10 din aage tak schedule karne deta hai.
 ## Kabhi kuch toot jaye
 
 - **Facebook/Instagram band:** Zikar Tone Facebook account ka password badla ya app hatayi to token band ho jata hai. developers.facebook.com/tools/explorer > app "Zikartone Reels" > Generate Access Token > Access Token Debugger mein "Extend" > `me/accounts` se naya Page token > GitHub Secrets mein META_PAGE_TOKEN update.
-- **YouTube band:** faizanraza12326@gmail.com ka password badla ya "Zikartone Reels" app ka access hataya to refresh token band. developers.google.com/oauthplayground (apna client ID/secret, scope youtube.upload) se naya refresh token > YT_REFRESH_TOKEN update. Google Cloud project: "Zikartone Reels" (fahadraza123267@gmail.com par).
+- **YouTube band:** faizanraza12326@gmail.com ka password badla ya "Zikartone Reels" app ka access hataya to refresh token band. developers.google.com/oauthplayground (apna client ID/secret, scope youtube.upload) se naya refresh token > YT_REFRESH_TOKEN update. Google Cloud project: zikartone-reels (sirf faizanraza12326@gmail.com par). Koi aur account use nahi karna.
 - **Kisi din ki reel dobara:** Actions > Daily reel > Run workflow > woh date. Jo platform pehle ho chuka hai woh skip hoga.
 - **Waqt badalna:** `.github/workflows/daily.yml` mein `cron: '0 14 * * *'` (UTC; Pakistan = UTC+5).
 - **Caption badalna:** `make_reel.py` mein `HOOKS` aur `TAGS`.
