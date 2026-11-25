@@ -104,7 +104,7 @@ jobs:
           TIKTOK_UA: ${{ vars.TIKTOK_UA }}
         run: |
           if [ -z "$TIKTOK_SESSIONID" ]; then echo "TikTok secrets not set, skipping TikTok."; exit 0; fi
-          pip install -q autotok
+          pip install -q tiktok-uploader
           python -m playwright install --with-deps chromium > /dev/null
           python upload_tiktok.py "${{ steps.make.outputs.base }}"
       # GitHub pauses scheduled workflows after 60 days without repository activity.

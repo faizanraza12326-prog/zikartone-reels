@@ -26,7 +26,7 @@ jobs:
       - name: Install
         run: |
           sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
-          pip install -q -r requirements.txt autotok
+          pip install -q -r requirements.txt tiktok-uploader
           python -m playwright install --with-deps chromium > /dev/null
           bash setup_assets.sh
       - name: Check login
