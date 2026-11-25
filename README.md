@@ -1,6 +1,6 @@
 # Zikartone Reels: poore saal ki automatic "Guess the Surah" reels
 
-Har roz shaam 7 baje (Pakistan time) GitHub khud ek nayi reel banata hai aur **Instagram, Facebook aur YouTube Shorts** par post karta hai. TikTok har 10 din mein haath se schedule hota hai. Sab free hai.
+Har roz shaam 7 baje (Pakistan time) GitHub khud ek nayi reel banata hai aur **Instagram, Facebook, YouTube Shorts aur TikTok** par post karta hai. Sab free hai.
 
 - Schedule: 1 December 2026 se 30 November 2027, 365 reels, 2920 sawal (har sawal code se check hua).
 - Har reel ki copy 30 din tak Actions > run > Artifacts mein rehti hai.
@@ -13,16 +13,18 @@ Har roz shaam 7 baje (Pakistan time) GitHub khud ek nayi reel banata hai aur **I
 | Facebook Page "Zikartone" | Khud, roz 7 PM | META_PAGE_TOKEN, FB_PAGE_ID |
 | Instagram zikartone.official | Khud, roz 7 PM (video GitHub Pages ke public link se jati hai) | META_PAGE_TOKEN, IG_USER_ID |
 | YouTube Zikartone.official | Khud, roz 7 PM | YT_CLIENT_ID, YT_CLIENT_SECRET, YT_REFRESH_TOKEN |
-| TikTok | Har 10 din, TikTok Studio se schedule (neeche dekho) | koi nahi |
+| TikTok | Khud, roz 7 PM (autotok, TikTok ki web upload) | TIKTOK_SESSIONID, TIKTOK_IDC (+ variable TIKTOK_UA) |
 
 Repo **Public** hai taa ke GitHub Pages chale (Instagram ko video ka public link chahiye). Secrets phir bhi kisi ko nazar nahi aate.
 
-## TikTok (har 10 din, 10 minute)
+## TikTok
 
-TikTok apne free scheduler mein sirf 10 din aage tak schedule karne deta hai.
-1. GitHub > Actions > **Batch of reels** > Run workflow > `from` = agli tareekh (maslan 2026-12-05), `days` = 10.
-2. Run khatam ho to Artifacts se zip download karo. Har din ki `.mp4` aur caption `.txt` mile gi.
-3. Laptop par tiktok.com/tiktokstudio/upload > video select karo > caption paste karo > **Schedule** > woh tareekh, 19:00 > Schedule.
+TikTok ka official API bina audit ke sirf private post karta hai, is liye TikTok wala step tumhare TikTok login (cookie) se upload karta hai. Ye login kuch mahine chalta hai.
+
+- **Login lagana/badalna (5 minute):** laptop Chrome mein tiktok.com par zikartone account se login > F12 > Application > Cookies > https://www.tiktok.com > `sessionid` ki Value copy karke GitHub > Settings > Secrets and variables > Actions mein **TIKTOK_SESSIONID** mein daalo, aur `tt-target-idc` ki Value **TIKTOK_IDC** mein. Phir Actions > **TikTok test** > Run workflow > `check`.
+- Us Chrome mein TikTok se **logout mat karna**, warna ye login band ho jata hai.
+- TikTok fail ho to us din ka run laal ho jata hai aur GitHub email bhejta hai. Baaki platforms phir bhi post ho chuke hote hain. Login dobara lagao, phir Actions > Daily reel > Run workflow > woh date (sirf TikTok post hoga).
+- Agar kabhi bilkul na chale to backup: Actions > **Batch of reels** (`from` = tareekh, `days` = 10) > zip download > tiktok.com/tiktokstudio/upload se har video **Schedule** karo (10 din aage tak).
 
 ## Kabhi kuch toot jaye
 
@@ -31,7 +33,7 @@ TikTok apne free scheduler mein sirf 10 din aage tak schedule karne deta hai.
 - **Kisi din ki reel dobara:** Actions > Daily reel > Run workflow > woh date. Jo platform pehle ho chuka hai woh skip hoga.
 - **Waqt badalna:** `.github/workflows/daily.yml` mein `cron: '0 14 * * *'` (UTC; Pakistan = UTC+5).
 - **Caption badalna:** `make_reel.py` mein `HOOKS` aur `TAGS`.
-- **Koi aur masla:** Actions mein run kholo, "Instagram + Facebook" ya "YouTube Shorts" step ka text copy karke kisi developer ya AI ko dikhao.
+- **Koi aur masla:** Actions mein run kholo, "Instagram + Facebook", "YouTube Shorts" ya "TikTok" step ka text copy karke kisi developer ya AI ko dikhao.
 
 ## Files
 
@@ -42,5 +44,7 @@ TikTok apne free scheduler mein sirf 10 din aage tak schedule karne deta hai.
 | `assets/template.html`, `audio.py` | Design aur awaaz (music nahi) |
 | `upload_meta.py` | Facebook + Instagram |
 | `upload_youtube.py` | YouTube Shorts |
+| `upload_tiktok.py` | TikTok |
 | `.github/workflows/daily.yml` | Roz ka kaam |
-| `.github/workflows/batch.yml` | Ek saath kai din ki reels (TikTok ke liye) |
+| `.github/workflows/batch.yml` | Ek saath kai din ki reels (backup) |
+| `.github/workflows/tiktok_test.yml` | TikTok login check / private test |
