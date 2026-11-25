@@ -94,6 +94,19 @@ jobs:
           YT_REFRESH_TOKEN: ${{ secrets.YT_REFRESH_TOKEN }}
           YT_PRIVACY: ${{ vars.YT_PRIVACY || 'public' }}
         run: python upload_youtube.py "${{ steps.make.outputs.base }}"
+      - name: TikTok
+        id: tt
+        if: steps.make.outputs.base
+        continue-on-error: true
+        env:
+          TIKTOK_SESSIONID: ${{ secrets.TIKTOK_SESSIONID }}
+          TIKTOK_IDC: ${{ secrets.TIKTOK_IDC }}
+          TIKTOK_UA: ${{ vars.TIKTOK_UA }}
+        run: |
+          if [ -z "$TIKTOK_SESSIONID" ]; then echo "TikTok secrets not set, skipping TikTok."; exit 0; fi
+          pip install -q autotok
+          python -m playwright install --with-deps chromium > /dev/null
+          python upload_tiktok.py "${{ steps.make.outputs.base }}"
       # GitHub pauses scheduled workflows after 60 days without repository activity.
       # A one-line log commit each day keeps the schedule alive for the whole year.
       - name: Log the run
@@ -103,3 +116,9 @@ jobs:
           git config user.name "zikartone-bot"
           git config user.email "zikartone-bot@users.noreply.github.com"
           git add posted.log && git commit -qm "Daily reel log" && git push -q || true
+      # If TikTok failed, mark the run as failed so GitHub sends an email (the other platforms still went out)
+      - name: Email me if TikTok failed
+        if: steps.tt.outcome == 'failure'
+        run: |
+          echo "TikTok upload failed. Most likely the TikTok login expired: copy a fresh sessionid into the TIKTOK_SESSIONID secret (see README)."
+          exit 1

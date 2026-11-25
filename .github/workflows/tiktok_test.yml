@@ -1,0 +1,38 @@
+name: TikTok test
+
+on:
+  workflow_dispatch:
+    inputs:
+      mode:
+        description: 'check = only test the login, private = upload a test reel visible only to you'
+        required: true
+        default: check
+        type: choice
+        options: [check, private]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TIKTOK_SESSIONID: ${{ secrets.TIKTOK_SESSIONID }}
+      TIKTOK_IDC: ${{ secrets.TIKTOK_IDC }}
+      TIKTOK_UA: ${{ vars.TIKTOK_UA }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install
+        run: |
+          sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg
+          pip install -q -r requirements.txt autotok
+          python -m playwright install --with-deps chromium > /dev/null
+          bash setup_assets.sh
+      - name: Check login
+        run: python upload_tiktok.py --check
+      - name: Private test upload
+        if: inputs.mode == 'private'
+        run: |
+          python make_reel.py --date 2026-12-05
+          python upload_tiktok.py out/2026-12-05 --private
