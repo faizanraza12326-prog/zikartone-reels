@@ -24,6 +24,23 @@ def client():
                                   user_agent=os.environ.get('TIKTOK_UA', '').strip() or DEFAULT_UA, proxy=False)
 
 
+def caption_variants(full):
+    """TikTok's web uploader is picky; fall back to simpler captions if the full one is rejected."""
+    import re
+    no_link = re.sub(r'[^\n]*https?://\S+[^\n]*\n*', '', full).strip()
+    plain = re.sub(r'[^\w\s#\'(),.!?/:-]', '', no_link)
+    plain = re.sub(r'[ \t]+', ' ', plain).strip()
+    first_line = plain.split('\n')[0].strip() or 'Guess the Surah'
+    tags = ' '.join(re.findall(r'#\w+', full)[:5])
+    out = [('full', full[:2000]), ('no link', no_link[:2000]), ('plain', plain[:2000]),
+           ('one line', (first_line + ' ' + tags).strip()), ('minimal', 'Guess the Surah quiz')]
+    seen, res = set(), []
+    for n, cpt in out:
+        if cpt and cpt not in seen:
+            seen.add(cpt); res.append((n, cpt))
+    return res
+
+
 def main(args):
     c = client()
     if c is None:
@@ -41,8 +58,19 @@ def main(args):
         print('TikTok already posted for', meta['date'], '- skipping'); return 0
     if not c.check_session():
         print('TikTok login EXPIRED: copy a fresh sessionid into the TIKTOK_SESSIONID secret'); return 1
-    res = c.upload(base + '.mp4', meta['caption'][:2000], visibility='private' if private else 'public')
-    print('TikTok posted', '(private test)' if private else '', res, flush=True)
+    res = None
+    for name, cap in caption_variants(meta['caption']):
+        try:
+            res = c.upload(base + '.mp4', cap, visibility='private' if private else 'public')
+            print('TikTok posted with caption variant:', name, '(private test)' if private else '', res, flush=True)
+            break
+        except Exception as e:
+            # status_code 5 = TikTok did not like something in the caption; try a simpler one
+            if getattr(e, 'status_code', None) != 5:
+                raise
+            print('TikTok rejected caption variant', name, '->', e, flush=True)
+    if res is None:
+        print('TikTok FAILED: every caption variant was rejected'); return 1
     if not private:
         open(log, 'a', encoding='utf8').write(mark + '\n')
     return 0
